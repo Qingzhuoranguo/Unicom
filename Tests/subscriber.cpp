@@ -11,7 +11,10 @@ int main () {
         MessagePtr msg;
         if (msgSys.receive(msg)) {
             std::string received_msg(msg->payload, msg->size);
-            std::cout << "Received message on topic " << msg->topic << ": " << received_msg << std::endl;
+            std::cout << "topic: " << msg->topic 
+                    << "\nmessage: " << received_msg
+                    << "\npriority: " << static_cast<int>(msg->priority) 
+                    << std::endl;
         }
     }
 
