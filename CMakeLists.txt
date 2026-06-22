@@ -7,4 +7,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(ThirdParty)
 add_subdirectory(MessageSystem)
+add_subdirectory(Component)
 add_subdirectory(Tests)

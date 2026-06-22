@@ -1,3 +1,5 @@
+# ~/Unicom/Tests/CMakeLists.txt
+
 add_executable(publisher
     publisher.cpp
 )
@@ -13,5 +15,16 @@ add_executable(subscriber
 
 target_link_libraries(subscriber
     PRIVATE
+        MessageSystem
+)
+
+
+add_executable(module
+    module.cpp
+)
+
+target_link_libraries(module
+    PRIVATE
+        Component
         MessageSystem
 )
