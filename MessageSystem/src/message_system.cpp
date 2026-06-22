@@ -9,6 +9,7 @@
 
 #include <array>
 #include <string>
+#include <cstring>
 
 #define TIPC_SOCKET_TYPE SOCK_DGRAM
 
@@ -103,7 +104,7 @@ bool MessageSystem::unsubscribe(TopicID topic) {
     return true;
 }
 
-bool MessageSystem::receive(Message& msg) {
+bool MessageSystem::receive(MessagePtr& msg) {
     std::lock_guard<std::mutex> lk(m_mutex);
 
     std::array<uint8_t, MAX_MSG_SIZE> buf{};
@@ -122,8 +123,16 @@ bool MessageSystem::receive(Message& msg) {
         );
 
         if (recv_size > 0) {
-            msg.topic = topic_id;
-            msg.data.assign(buf.begin(), buf.begin() + recv_size);
+            // 分配 Message 内存
+            Message* raw_msg = static_cast<Message*>(std::malloc(sizeof(Message) + recv_size));
+            if (!raw_msg) return false;
+            
+            raw_msg->topic = topic_id;
+            raw_msg->size = static_cast<int>(recv_size);
+            std::memcpy(raw_msg->payload, buf.data(), recv_size);
+            
+            // 使用智能指针管理
+            msg.reset(raw_msg);
             return true;
         }
     }
