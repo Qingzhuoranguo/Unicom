@@ -41,6 +41,10 @@
 #ifndef __TIPCC_H_
 #define __TIPCC_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
@@ -118,5 +122,10 @@ int tipc_link_subscr(uint32_t topsrv_node);
 int tipc_link_evt(int sd, uint32_t *neigh_node, bool *up,
 	          int *local_bearerid, int *remote_bearerid);
 char* tipc_linkname(char *buf, size_t len, uint32_t peer, int bearerid);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

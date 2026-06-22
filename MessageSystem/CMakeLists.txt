@@ -1,14 +1,13 @@
-cmake_minimum_required(VERSION 3.10)
-set(CMAKE_CXX_STANDARD 17)
-
-project(MessageSystem)
-
-
-add_library(message_system
+add_library(MessageSystem STATIC
     src/message_system.cpp
 )
 
-target_include_directories(message_system
+target_include_directories(MessageSystem
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(MessageSystem
+    PUBLIC
+        ThirdParty
 )
