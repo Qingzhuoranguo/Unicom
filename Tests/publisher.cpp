@@ -1,19 +1,49 @@
-#include <iostream>
-#include <unistd.h>
-
 #include "message_system.h"
 
-#define NUM_MESSAGES 100
+#include <iostream>
+#include <unistd.h>
+#include <thread>
+#include <chrono>
+#include <random>
 
-int main () {
+#define NUM_MESSAGES 10000
+
+int main(int argc, char* argv[])
+{
+    // 1) 读取命令行参数
+    std::string topic = "test_topic";
+    if (argc > 1) {
+        topic = argv[1];
+    }
+
     MessageSystem msgSys;
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(
+        0, static_cast<int>(MessagePriority::Count) - 1
+    );
 
-    for ( int i = 0; i < NUM_MESSAGES; ++i ) {
-        std::string message = "this is the message number " + std::to_string(i);
+    int i = 0;
+    while (true) {
+        ++i;
+        std::string message = "test msg: " + std::to_string(i);
 
-        msgSys.publish("test_topic", message.c_str(), message.size());
-        sleep(1); // Sleep for a bit to allow the subscriber to process messages
+        MessagePriority pr = static_cast<MessagePriority>(dist(gen));
+
+        bool ok = msgSys.publish(topic,
+                                 message.c_str(),
+                                 message.size(),
+                                 pr,
+                                 ChannelType::ReliableFast);
+
+        std::cout << "publish[" << i << "]"
+                  << " topic=" << topic
+                  << " priority=" << static_cast<int>(pr)
+                  << " => " << (ok ? "ok" : "FAILED")
+                  << std::endl;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     return 0;
