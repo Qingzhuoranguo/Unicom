@@ -1,4 +1,4 @@
-add_library(tipc
+add_library(tipc SHARED
     libtipc.c
 )
 

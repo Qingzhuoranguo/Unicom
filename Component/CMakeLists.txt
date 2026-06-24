@@ -1,4 +1,4 @@
-add_library(Component STATIC
+add_library(Component SHARED
     src/component.cpp
 )
 

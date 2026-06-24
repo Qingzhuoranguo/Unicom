@@ -1,6 +1,6 @@
 # utils/CMakeLists.txt
 
-add_library(utils
+add_library(utils SHARED
     hash.cpp
     rng.cpp
 )
