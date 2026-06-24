@@ -2,6 +2,7 @@
 add_subdirectory(utils)
 add_subdirectory(tipc)
 add_subdirectory(nlohmann)
+add_subdirectory(threadpool)
 
 
 add_library(ThirdParty INTERFACE)
@@ -16,4 +17,5 @@ target_link_libraries(ThirdParty
         utils
         tipc
         nlohmann
+        threadpool
 )

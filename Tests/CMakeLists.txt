@@ -9,6 +9,9 @@ target_link_libraries(publisher
         MessageSystem
 )
 
+
+
+
 add_executable(subscriber
     subscriber.cpp
 )
@@ -19,6 +22,9 @@ target_link_libraries(subscriber
 )
 
 
+
+
+
 add_executable(module
     module.cpp
 )
@@ -27,4 +33,15 @@ target_link_libraries(module
     PRIVATE
         Component
         MessageSystem
+)
+
+
+
+add_executable(threadpooltest
+    threadpooltest.cpp
+)
+
+target_link_libraries(threadpooltest
+    PUBLIC
+        ThirdParty
 )
