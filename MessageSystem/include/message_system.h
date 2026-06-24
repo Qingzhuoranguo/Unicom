@@ -23,11 +23,6 @@ enum class MessagePriority : uint8_t {
     Count
 };
 
-enum class OverflowPolicy : uint8_t {
-    DropOldest = 0,
-    DropNewest,
-    Fatal
-};
 
 enum class ChannelType : uint8_t {
     Fast,           // Unreliable + Unordered
@@ -62,6 +57,11 @@ using MessagePtr = std::unique_ptr<Message, MessageDeleter>;
 //  before any threads are started. Do NOT move a mailbox
 //  that may be concurrently accessed.
 // ─────────────────────────────────────────────────────────────
+enum class OverflowPolicy : uint8_t {
+    DropOldest = 0,
+    DropNewest,
+    Fatal
+};
 class PriorityMailbox {
 public:
     PriorityMailbox() = default;

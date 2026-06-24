@@ -81,7 +81,6 @@ bool PriorityMailbox::push(MessagePtr msg)
         m_queue.push_back(std::move(msg));
         return true;
     }
-
     switch (m_policy) {
         case OverflowPolicy::DropNewest:
             ++m_droppedCount;
