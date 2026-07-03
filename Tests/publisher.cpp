@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[])
 {
-    // 1) 读取命令行参数
+
     std::string topic = "test_topic";
     if (argc > 1) {
         topic = argv[1];
