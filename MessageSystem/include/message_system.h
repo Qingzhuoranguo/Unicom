@@ -47,15 +47,7 @@ struct MessageDeleter {
 using MessagePtr = std::unique_ptr<Message, MessageDeleter>;
 
 // ─────────────────────────────────────────────────────────────
-//  PriorityMailbox
-//  Each priority level owns one mailbox with its own mutex.
-//  push() may be called concurrently from two recvLoop threads.
-//  tryPop() is called from receive() (consumer side).
-//
 //  NOTE: Move construction/assignment are NOT thread-safe.
-//  They are only used during MessageSystem construction,
-//  before any threads are started. Do NOT move a mailbox
-//  that may be concurrently accessed.
 // ─────────────────────────────────────────────────────────────
 enum class OverflowPolicy : uint8_t {
     DropOldest = 0,
@@ -93,38 +85,37 @@ public:
     MessageSystem();
     ~MessageSystem();
 
-    MessageSystem(const MessageSystem&)            = delete;
-    MessageSystem& operator=(const MessageSystem&) = delete;
-    MessageSystem(MessageSystem&&)                 = delete;
-    MessageSystem& operator=(MessageSystem&&)      = delete;
-
-    bool    publish(std::string_view topic,
+    bool publish(   std::string_view topic,
                     const void*      data,
                     size_t           size,
                     MessagePriority  priority = MessagePriority::Normal,
-                    ChannelType      channel  = ChannelType::Fast);
+                    ChannelType      channel  = ChannelType::Fast );
 
     // A topic can only be bound to one ChannelType.
     // Returns INVALID_TOPIC_ID (0) on failure or channel conflict.
-    // hash::hash64 must never return 0; this is asserted in subscribe().
-    TopicID subscribe(std::string_view topic,
-                      ChannelType      channel = ChannelType::Fast);
+    TopicID subscribe(  std::string_view topic,
+                        ChannelType      channel = ChannelType::Fast );
 
-    bool    unsubscribe(TopicID id);
+    bool unsubscribe(TopicID id);
 
-    // Dequeue the highest-priority available message (both channels merged).
     // timeout_ms == -1 : block indefinitely
     // timeout_ms ==  0 : non-blocking
     // timeout_ms >  0  : wait up to N ms
-    bool    receive(MessagePtr& msg, int timeout_ms = -1);
+    bool receive(MessagePtr& msg, int timeout_ms = -1);
 
     inline bool isRunning() const { return m_running.load(); }
-    void    stats() const;
+    void stats() const;
 
 private:
     void recvLoop(ChannelType channel);
     bool enqueue(MessagePtr msg);
     static int socketTypeForChannel(ChannelType ch) noexcept;
+
+    
+    MessageSystem( const MessageSystem& )            = delete;
+    MessageSystem& operator = (const MessageSystem& ) = delete;
+    MessageSystem( MessageSystem&& )                 = delete;
+    MessageSystem& operator = ( MessageSystem&& )      = delete;
 
 private:
     constexpr static size_t PRIORITY_COUNT =
@@ -132,7 +123,6 @@ private:
     constexpr static size_t CHANNEL_COUNT  =
         static_cast<size_t>(ChannelType::Count);       // 2
 
-    // ── Topic registry ───────────────────────────────────────
     struct TopicEntry {
         int         socket {-1};
         ChannelType channel{ChannelType::Fast};
@@ -143,31 +133,21 @@ private:
     std::array<size_t, CHANNEL_COUNT>        m_channelTopicCount{};
     std::mutex                               m_topicMutex;
 
-    // ── Publish sockets ──────────────────────────────────────
-    //   [0] Fast         → SOCK_DGRAM
-    //   [1] ReliableFast → SOCK_RDM
     std::array<int, CHANNEL_COUNT> m_pubSockets{-1, -1};
     mutable std::mutex             m_pubMutex;
 
-    // ── Mailboxes (3 priorities, each with its own mutex) ────
     std::array<PriorityMailbox, PRIORITY_COUNT> m_mailboxes;
 
-    // ── Global arrival signal (wakes receive() callers) ──────
-    //  INVARIANT: m_totalCount is only modified while holding m_cvMutex,
-    //  so that wait/notify in receive()/enqueue() are race-free.
     std::mutex              m_cvMutex;
     std::condition_variable m_cv;
     std::atomic<size_t>     m_totalCount{0};
 
-    // ── Per-channel sleep/wake (used when topic count hits 0) ─
     std::array<std::mutex,              CHANNEL_COUNT> m_channelMutexes;
     std::array<std::condition_variable, CHANNEL_COUNT> m_channelCvs;
 
-    // ── Receiver threads (one per channel) ───────────────────
     std::atomic<bool>                      m_running{true};
     std::array<std::thread, CHANNEL_COUNT> m_recvThreads;
 
-    // ── Stats ─────────────────────────────────────────────────
     std::atomic<uint64_t> m_receivedCount{0};
     std::atomic<size_t>   m_maxDepth{0};
 };

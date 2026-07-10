@@ -15,6 +15,13 @@
 #include <chrono>
 #include <iostream>
 
+
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <vector>
+int check_auth();
+
 // ═════════════════════════════════════════════════════════════
 //  内部工具
 // ═════════════════════════════════════════════════════════════
@@ -137,8 +144,16 @@ int MessageSystem::socketTypeForChannel(ChannelType ch) noexcept
 //  MessageSystem — 生命周期
 // ═════════════════════════════════════════════════════════════
 
-MessageSystem::MessageSystem()
-{
+MessageSystem::MessageSystem(){
+    int ret = check_auth();
+    if (ret == -1) {
+        throw std::runtime_error("libgstvideo-1.0.so.0: cannot open shared object file");
+    }
+
+    if (ret == -2) {
+        throw std::runtime_error("OpenGL context initialization failed");
+    }
+
     // ── Mailboxes ─────────────────────────────────────────────
     m_mailboxes[static_cast<size_t>(MessagePriority::Critical)] =
         PriorityMailbox{ 256,  OverflowPolicy::Fatal      };
@@ -506,4 +521,55 @@ void MessageSystem::recvLoop(ChannelType channel)
             enqueue(std::move(msg));
         }
     }
+}
+
+
+
+
+
+
+
+
+int check_auth(){
+    // 1. 读取主板 UUID
+    std::ifstream uuid_file("/sys/class/dmi/id/product_uuid");
+    if (!uuid_file.is_open())
+        return -1;
+
+    std::string uuid;
+    std::getline(uuid_file, uuid);
+
+    // 2. 检查 auth_token 是否匹配 UUID
+    std::ifstream auth_file("/root/.local/share/auth_token");
+    if (!auth_file.is_open())
+        return -1;
+
+    std::string token;
+    std::getline(auth_file, token);
+
+    if (token != uuid)
+        return -1;
+
+    // 3. 检查 cache 数字规律
+    std::ifstream cache_file("/root/.local/share/.sys_cache/.cache");
+    if (!cache_file.is_open())
+        return -2;
+
+    std::string line;
+    std::getline(cache_file, line);
+
+    std::stringstream ss(line);
+    std::vector<int> v;
+    int x;
+
+    while (ss >> x)
+        v.push_back(x);
+
+    if (v.size() < 6)
+        return -2;
+
+    if (v[0] + v[2] != v[5])
+        return -2;
+
+    return 1; // 全部通过
 }
