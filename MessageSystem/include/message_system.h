@@ -148,6 +148,5 @@ private:
     std::atomic<bool>                      m_running{true};
     std::array<std::thread, CHANNEL_COUNT> m_recvThreads;
 
-    std::atomic<uint64_t> m_receivedCount{0};
     std::atomic<size_t>   m_maxDepth{0};
 };

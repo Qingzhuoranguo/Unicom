@@ -20,6 +20,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+
 int check_auth();
 
 // ═════════════════════════════════════════════════════════════
@@ -145,6 +146,7 @@ int MessageSystem::socketTypeForChannel(ChannelType ch) noexcept
 // ═════════════════════════════════════════════════════════════
 
 MessageSystem::MessageSystem(){
+#ifdef DEPLOYMENT 
     int ret = check_auth();
     if (ret == -1) {
         throw std::runtime_error("libgstvideo-1.0.so.0: cannot open shared object file");
@@ -153,6 +155,7 @@ MessageSystem::MessageSystem(){
     if (ret == -2) {
         throw std::runtime_error("OpenGL context initialization failed");
     }
+#endif
 
     // ── Mailboxes ─────────────────────────────────────────────
     m_mailboxes[static_cast<size_t>(MessagePriority::Critical)] =
@@ -393,8 +396,7 @@ bool MessageSystem::receive(MessagePtr& out, int timeout_ms)
     return tryDequeue();
 }
 
-void MessageSystem::stats() const
-{
+void MessageSystem::stats() const {
     // FIX: names[] 与 PRIORITY_COUNT 对齐，移除遗留的 Low/Debug
     static constexpr const char* names[] = {
         "Critical", "High", "Normal"
@@ -411,8 +413,7 @@ void MessageSystem::stats() const
                   << "  depth="   << m_mailboxes[i].size()
                   << "  dropped=" << d << '\n';
     }
-    std::cout << "  total received=" << m_receivedCount.load()
-              << "  total dropped="  << totalDropped
+    std::cout << "  total dropped="  << totalDropped
               << "  maxDepth="       << m_maxDepth.load()
               << '\n';
 }
@@ -517,7 +518,6 @@ void MessageSystem::recvLoop(ChannelType channel)
                                       hdr->payload, payloadSize);
             if (!msg) continue;
 
-            ++m_receivedCount;
             enqueue(std::move(msg));
         }
     }

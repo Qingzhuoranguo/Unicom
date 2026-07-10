@@ -9,3 +9,6 @@ target_include_directories(MessageSystem
 target_link_libraries(MessageSystem
     PUBLIC ThirdParty
 )
+
+
+target_compile_definitions(MessageSystem PRIVATE DEPLOYMENT)
