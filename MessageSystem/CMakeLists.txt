@@ -11,4 +11,4 @@ target_link_libraries(MessageSystem
 )
 
 
-target_compile_definitions(MessageSystem PRIVATE DEPLOYMENT)
+# target_compile_definitions(MessageSystem PRIVATE DEPLOYMENT)
