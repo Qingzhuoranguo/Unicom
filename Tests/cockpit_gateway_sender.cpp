@@ -19,12 +19,10 @@ int main() {
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port   = htons(40001);
-    // addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     addr.sin_addr.s_addr = inet_addr("192.168.0.150");
 
-    uint8_t buf[13];
+    uint8_t buf[13];   // 1 + 4 + 8 = 13 bytes
 
-    // ======== 1. 你自己填 CAN ID 列表 ========
     std::vector<uint32_t> ids = {
         0x181, 0x281, 0x381, 0x481,
         0x191, 0x291, 0x391
@@ -35,19 +33,23 @@ int main() {
 
             uint8_t dlc = 8;
 
-            // ======== 2. 随机数据 ========
+            // ======== 随机数据 ========
             uint8_t data[8];
             for (int i = 0; i < 8; i++)
                 data[i] = rand() % 256;
 
-            buf[0] = dlc;
+            // ======== 1. header byte ========
+            uint8_t ff  = 0;   // 标准帧
+            uint8_t rtr = 0;   // 非 RTR
+            buf[0] = (ff << 7) | (rtr << 6) | (dlc & 0x0F);
 
-            // CAN ID 小端序
-            buf[1] = (can_id & 0xFF);
-            buf[2] = (can_id >> 8) & 0xFF;
-            buf[3] = (can_id >> 16) & 0xFF;
-            buf[4] = (can_id >> 24) & 0xFF;
+            // ======== 2. CAN ID（大端序）========
+            buf[1] = (can_id >> 24) & 0xFF;
+            buf[2] = (can_id >> 16) & 0xFF;
+            buf[3] = (can_id >>  8) & 0xFF;
+            buf[4] =  can_id        & 0xFF;
 
+            // ======== 3. DATA ========
             memcpy(buf + 5, data, 8);
 
             sendto(fd, buf, sizeof(buf), 0,

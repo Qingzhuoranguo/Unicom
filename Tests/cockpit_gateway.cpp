@@ -155,27 +155,40 @@ static int udp_init(const char *ip, uint16_t port) {
 }
 
 static inline bool parse_udp_can_msg(const uint8_t *buf, size_t n, can_msg *m) {
-    if (n < 13) return false;
+    // 最小长度：1字节 header + 4字节 ID = 5字节
+    if (n < 5) return false;
 
-    // 1. DLC
-    m->len = buf[0];
-    if (m->len > 8) {
-        // DLC 超出合法范围，丢弃该帧
-        return false;
-    }
+    // 1. 解析 header byte
+    uint8_t header = buf[0];
+    uint8_t ff  = (header >> 7) & 0x01;
+    uint8_t rtr = (header >> 6) & 0x01;
+    uint8_t dlc = header & 0x0F;
 
-    // 2. CAN ID（小端）
-    m->id =  (uint32_t)buf[1]
-           | ((uint32_t)buf[2] << 8)
-           | ((uint32_t)buf[3] << 16)
-           | ((uint32_t)buf[4] << 24);
+    if (dlc > 8) return false;  // DLC 非法，丢弃
 
-    // 3. DATA（固定 8 字节）
-    memcpy(m->data, buf + 5, 8);
+    m->len = dlc;
 
+    // 2. CAN ID（大端序）
+    m->id =  ((uint32_t)buf[1] << 24)
+           | ((uint32_t)buf[2] << 16)
+           | ((uint32_t)buf[3] <<  8)
+           |  (uint32_t)buf[4];
+
+    // 3. DATA：清零后按实际可用长度拷贝
+    memset(m->data, 0, 8);
+
+    size_t available = (n > 5) ? (n - 5) : 0;
+    size_t copy_len  = (dlc < available) ? dlc : available;
+    if (copy_len > 8) copy_len = 8;
+
+    memcpy(m->data, buf + 5, copy_len);
+
+    // 4. flags：存 ff / rtr
     m->flags = 0;
+    if (ff)  m->flags |= 0x01;
+    if (rtr) m->flags |= 0x02;
 
-    // 使用实际接收时间作为时间戳（毫秒）
+    // 5. 时间戳
     auto now = std::chrono::system_clock::now();
     m->timestamp = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::milliseconds>(
