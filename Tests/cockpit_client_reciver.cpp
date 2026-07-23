@@ -21,6 +21,8 @@ void print_can_msg_live(const can_msg& msg);
 std::string format_timestamp(uint64_t ts_ms) ;
 
 int main () {
+    std::cout << "Starting cockpit client receiver..." << std::endl;
+    
     MessageSystem msgSys;
     TopicID id = msgSys.subscribe( "cockpit_gateway.CAN_PROXY");
     if (id == 0) {
