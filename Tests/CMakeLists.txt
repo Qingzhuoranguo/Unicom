@@ -77,3 +77,27 @@ target_link_libraries(cockpit_client_reciever
     PRIVATE
         MessageSystem
 )
+
+
+
+
+add_executable(cockpit_gateway_xingtong
+    cockpit_gateway_xingtong.cpp
+)
+
+target_link_libraries(cockpit_gateway_xingtong
+    PRIVATE
+        MessageSystem
+        nlohmann
+)
+
+
+add_executable(cockpit_gateway_reciever_xingtong
+    cockpit_gateway_reciever_xingtong.cpp
+)
+
+target_link_libraries(cockpit_gateway_reciever_xingtong
+    PRIVATE
+        MessageSystem
+        nlohmann
+)
