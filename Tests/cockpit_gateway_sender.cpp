@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
     uint8_t buf[13];  // 1 + 4 + 8 = 13 bytes
 
     std::vector<uint32_t> ids = {
-        0x264, 0x364, 0x464, 0x564, 0x1b8
+        0x264, 0x364, 0x464, 0x564, 0x1b8, 0x2b8
     };
 
     srand((unsigned)time(nullptr));
