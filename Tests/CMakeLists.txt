@@ -101,3 +101,8 @@ target_link_libraries(cockpit_gateway_reciever_xingtong
         MessageSystem
         nlohmann
 )
+
+
+add_executable( auth_program
+    auth_program.cpp
+)
