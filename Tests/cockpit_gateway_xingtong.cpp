@@ -200,14 +200,32 @@ int main(int argc, char* argv[]) {
             if (fields.empty()) continue;
             
             if (fields[0] == "$GPGGA") {
-                rtk_msg_rc.status = std::stoi(fields[6]);
-                rtk_msg_rc.satellite_count = std::stoi(fields[7]);
-                rtk_msg_rc.hdop = std::stod(fields[8]);
-                rtk_msg_rc.MSL = std::stod(fields[9]);
-                rtk_msg_rc.GS = std::stod(fields[11]);
 
-                gga_ready = true;
+                if (fields.size() < 12) {
+                    std::cerr << "GGA message too short" << std::endl;
+                    continue;
+                }
+
+                try {
+                    rtk_msg_rc.status = std::stoi(fields[6]);
+                    rtk_msg_rc.satellite_count = std::stoi(fields[7]);
+                    rtk_msg_rc.hdop = std::stod(fields[8]);
+                    rtk_msg_rc.MSL = std::stod(fields[9]);
+                    rtk_msg_rc.GS = std::stod(fields[11]);
+
+                    gga_ready = true;
+                } catch (const std::exception &e) {
+                    std::cerr << "Error parsing GGA fields: " << e.what() << std::endl;
+                    std::cerr << "RAW: " << std::string(reinterpret_cast<char*>(buf), n) << std::endl;
+
+                    continue;
+                }
+
             }else if (fields[0] == "$GPRMC") {
+                if (fields.size() < 9) {
+                    std::cerr << "RMC message too short" << std::endl;
+                    continue;
+                }
                 static auto nmea_to_degree = [](const std::string &nmea){
                     double v = std::stod(nmea);
                     
@@ -217,18 +235,35 @@ int main(int argc, char* argv[]) {
                     return deg + min / 60.0;
                 };
 
-                rtk_msg_rc.latitude = nmea_to_degree(fields[3]);
-                rtk_msg_rc.longitude = nmea_to_degree(fields[5]);
-                if (fields[4] == "S") rtk_msg_rc.latitude = -rtk_msg_rc.latitude;
-                if (fields[6] == "W") rtk_msg_rc.longitude = -rtk_msg_rc.longitude;
+                try {
+                    rtk_msg_rc.latitude = nmea_to_degree(fields[3]);
+                    rtk_msg_rc.longitude = nmea_to_degree(fields[5]);
+                    if (fields[4] == "S") rtk_msg_rc.latitude = -rtk_msg_rc.latitude;
+                    if (fields[6] == "W") rtk_msg_rc.longitude = -rtk_msg_rc.longitude;
+    
+                    rtk_msg_rc.velocity =  std::stod(fields[7]) * 1.852;   // knot -> km/h
+                    rtk_msg_rc.course = std::stod(fields[8]);
+    
+                    rmc_ready = true;
+                } catch (const std::exception &e) {
+                    std::cerr << "Error parsing RMC fields: " << e.what() << std::endl;
+                    std::cerr << "RAW: " << std::string(reinterpret_cast<char*>(buf), n) << std::endl;
+                    continue;
+                }
 
-                rtk_msg_rc.velocity =  std::stod(fields[7]) * 1.852;   // knot -> km/h
-                rtk_msg_rc.course = std::stod(fields[8]);
-
-                rmc_ready = true;
             }else if ( fields[0] == "$GNHDT") {
-                rtk_msg_rc.heading = std::stod(fields[1]);
-                hdt_ready = true;
+                if (fields.size() < 2) {
+                    std::cerr << "HDT message too short" << std::endl;
+                    continue;
+                }
+                try {
+                    rtk_msg_rc.heading = std::stod(fields[1]);
+                    hdt_ready = true;
+                } catch (const std::exception &e) {
+                    std::cerr << "Error parsing HDT fields: " << e.what() << std::endl;
+                    std::cerr << "RAW: " << std::string(reinterpret_cast<char*>(buf), n) << std::endl;
+                    continue;
+                }
 
             }else {
                 // unknown RTK message type
